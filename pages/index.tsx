@@ -49,7 +49,7 @@ export default function Home() {
 
   useEffect(() => {
     clientRef.current = sdwebui({
-      apiUrl: "https://10.112.10.221:7860",
+      apiUrl: "http://10.112.10.221:7860",
     });
   }, []);
 
