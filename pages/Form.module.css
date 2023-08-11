@@ -1,0 +1,116 @@
+.inputGroup {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.label {
+  opacity: 0.67;
+}
+
+.label svg {
+  margin: 0.25rem;
+  height: 1.4rem;
+}
+
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  position: relative;
+}
+
+.form input,
+.form textarea,
+.form .radioButton {
+  background: rgb(var(--background-rgb));
+  color: rgb(var(--foreground-rgb));
+  border: 1px solid rgba(var(--foreground-rgb), 0.33);
+  padding: 0.5rem;
+  border-radius: 0.3rem;
+  display: block;
+  font-size: 90%;
+}
+
+.form input:hover,
+.form textarea:hover,
+.form .radioButton:hover {
+  border-color: rgb(var(--foreground-rgb), 0.67);
+}
+.randomize {
+  margin-top: 0.25rem;
+  margin-left: -2.5rem;
+  padding-right: 0.5rem;
+  /* background: red; */
+}
+
+.randomize:hover .iconLock,
+.iconLockOpen {
+  display: none;
+}
+.randomize:hover .iconLockOpen,
+.iconLock {
+  display: inline-block;
+}
+
+.form input,
+.form textarea,
+.radioButtons {
+  min-width: 18rem;
+  max-width: 48rem;
+  flex: 1;
+}
+.form input,
+.radioButtons {
+  min-width: 0;
+  max-width: 12rem;
+  flex: 1;
+}
+
+.form textarea {
+  min-height: 7vh;
+}
+
+.radioButtons,
+.inputWithButton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.radioButton input {
+  display: none;
+}
+
+.form .radioButton:has(input:checked) {
+  border-color: var(--foreground-rgb);
+}
+
+.form .radioButton svg {
+  opacity: 0.33;
+}
+
+.form .radioButton:hover svg {
+  opacity: 0.67;
+}
+.form .radioButton:has(input:checked) svg {
+  opacity: 1;
+}
+
+.submit {
+  background: rgb(var(--foreground-rgb));
+  color: rgb(var(--background-rgb));
+  border: 1px solid rgba(var(--foreground-rgb), 1);
+  padding: 0.5rem;
+  border-radius: 0.3rem;
+  display: block;
+}
+.submit:hover {
+  background: rgb(var(--background-rgb));
+  color: rgb(var(--foreground-rgb));
+  border: 1px solid rgba(var(--foreground-rgb), 1);
+}

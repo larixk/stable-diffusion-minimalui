@@ -1,0 +1,99 @@
+.generation {
+  position: relative;
+  transition: opacity 0.2s ease;
+}
+
+.isNotMatchingHovered {
+  opacity: 0.17;
+}
+
+.ui {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(var(--background-rgb), 0.67);
+  border: 1px dashed rgba(var(--foreground-rgb), 0.33);
+  box-sizing: border-box;
+  padding: 1rem;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.loaded .ui {
+  border-color: transparent;
+  opacity: 0;
+}
+.generation:hover.loaded .ui {
+  opacity: 1;
+}
+.isBeingLoaded .ui {
+  border: 1px solid rgba(var(--foreground-rgb), 1);
+  animation: pulsateBorder 1s ease infinite;
+}
+
+@keyframes pulsateBorder {
+  0% {
+    border-color: rgba(var(--foreground-rgb), 0.33);
+  }
+  50% {
+    border-color: rgba(var(--foreground-rgb), 1);
+  }
+  100% {
+    border-color: rgba(var(--foreground-rgb), 0.33);
+  }
+}
+
+.options {
+  width: calc(512px - 2rem - 2px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.option {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.option span {
+  background: rgb(var(--background-rgb), 0.33);
+  color: rgb(var(--foreground-rgb));
+  border: 1px solid rgba(var(--foreground-rgb), 0.33);
+  padding: 0.5rem;
+  border-radius: 0.3rem;
+  display: block;
+  font-size: 90%;
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.delete,
+.download {
+  background: rgb(var(--foreground-rgb));
+  color: rgb(var(--background-rgb));
+  border: 1px solid rgba(var(--foreground-rgb), 1);
+  padding: 0.5rem;
+  border-radius: 0.3rem;
+  display: block;
+}
+.delete:hover,
+.download:hover {
+  background: rgb(var(--background-rgb), 0.33);
+  color: rgb(var(--foreground-rgb));
+  border: 1px solid rgba(var(--foreground-rgb), 1);
+}
+
+.dropper:hover {
+  opacity: 0.67;
+}
