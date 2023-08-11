@@ -32,10 +32,9 @@ export default function Home() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const sdUrl = urlParams.get("sd") || "127.0.0.1";
 
     clientRef.current = sdwebui({
-      apiUrl: `http://${sdUrl}:7860`,
+      apiUrl: urlParams.get("sd") || "http://127.0.0.1:7860",
     });
   }, []);
 
