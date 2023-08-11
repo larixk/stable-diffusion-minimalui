@@ -1,14 +1,10 @@
-import { FormEvent, useRef, useState } from "react";
 import styles from "./Form.module.css";
-import { getFormValues } from "./getFormValues";
-import { Options } from ".";
+import { Options } from "../pages";
 import { IconPrompt } from "./Icons/IconPrompt";
 import { IconNegativePrompt } from "./Icons/IconNegativePrompt";
 import { IconAspectRatio } from "./Icons/IconAspectRatio";
 import { IconSteps } from "./Icons/IconSteps";
 import { IconSeed } from "./Icons/IconSeed";
-import { on } from "events";
-import { IconTrash } from "./Icons/IconTrash";
 import { IconPortrait } from "./Icons/IconPortrait";
 import { IconLandscape } from "./Icons/IconLandscape";
 import { IconSquare } from "./Icons/IconSquare";

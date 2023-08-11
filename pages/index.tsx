@@ -1,9 +1,9 @@
 const sdwebui = require("node-sd-webui").default;
 import { useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
-import { Form } from "./Form";
-import { Generations } from "./Generations";
-import { generatePrompt } from "./generatePrompt";
+import { Form } from "../components/Form";
+import { Generations } from "../components/Generations";
+import { generatePrompt } from "../components/generatePrompt";
 
 const defaultTxt2ImgOptions = {
   prompt: "",
@@ -31,12 +31,10 @@ export default function Home() {
   );
 
   useEffect(() => {
-    // get sd url from query params
     const urlParams = new URLSearchParams(window.location.search);
     const sdUrl = urlParams.get("sd") || "127.0.0.1";
 
     clientRef.current = sdwebui({
-      // apiUrl: "http://10.112.10.221:7860",
       apiUrl: `http://${sdUrl}:7860`,
     });
   }, []);

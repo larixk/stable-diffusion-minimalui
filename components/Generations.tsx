@@ -1,6 +1,6 @@
 import styles from "./Generations.module.css";
 import classnames from "classnames";
-import { Generation, Options } from ".";
+import { Generation, Options } from "../pages";
 import { IconPrompt } from "./Icons/IconPrompt";
 import { IconAspectRatio } from "./Icons/IconAspectRatio";
 import { IconNegativePrompt } from "./Icons/IconNegativePrompt";
