@@ -95,6 +95,7 @@ export function Generations({
   onClickOption: (key: keyof Options, value: Options[keyof Options]) => void;
   options: Options;
 }) {
+  const [viewingGuid, setViewingGuid] = useState<string | null>(null);
   const [hoveredOptionAndValue, setHoveredOptionAndValue] = useState<
     [keyof Options, Options[keyof Options]] | null
   >(null);
@@ -104,13 +105,24 @@ export function Generations({
   );
 
   return generations.map((generation) => {
-    const width = generation.options.aspectRatio === "landscape" ? 768 : 512;
-    const height = generation.options.aspectRatio === "portrait" ? 768 : 512;
+    const isViewing = viewingGuid === generation.guid;
+    const isViewingOther = viewingGuid && viewingGuid !== generation.guid;
+
+    const scale = isViewingOther ? 1 / 16 : 1;
+
+    const width =
+      scale * (generation.options.aspectRatio === "landscape" ? 768 : 512);
+    const height =
+      scale * (generation.options.aspectRatio === "portrait" ? 768 : 512);
     return (
       <div
         className={classnames(styles.generation, {
           [styles.loaded]: generation.image !== null,
           [styles.isBeingLoaded]: nextQueuedGeneration === generation,
+
+          [styles.isViewing]: isViewing,
+          [styles.isViewingOther]: isViewingOther,
+
           [styles.isMatchingHovered]:
             hoveredOptionAndValue !== null &&
             generation.options[hoveredOptionAndValue[0]] ===
@@ -120,13 +132,16 @@ export function Generations({
             generation.options[hoveredOptionAndValue[0]] !==
               hoveredOptionAndValue[1],
         })}
+        onClick={
+          isViewingOther ? () => setViewingGuid(generation.guid) : undefined
+        }
         key={generation.guid}
       >
         <div
           className={styles.imageContainer}
           style={{
-            width: `${width}px`,
-            height: `${height}px`,
+            width: isViewing ? "auto" : `${width}px`,
+            height: isViewing ? "auto" : `${height}px`,
           }}
         >
           {generation.image &&
@@ -135,8 +150,6 @@ export function Generations({
               <img
                 alt={generation.options.prompt}
                 src={`data:image/png;base64,${generation.image}`}
-                height={height}
-                width={width}
               />
             ) : (
               <svg
@@ -181,14 +194,42 @@ export function Generations({
             })}
           </div>
           <div className={styles.buttons}>
-            {generation.image && (
-              <a
-                className={styles.download}
-                href={`data:image/png;base64,${generation.image}`}
-                download={`${generation.options.seed}-${generation.options.prompt}.png`}
-              >
-                <IconDownload />
-              </a>
+            {generation.image && generation.image !== "error" && (
+              <>
+                <a
+                  className={styles.download}
+                  href={`data:image/png;base64,${generation.image}`}
+                  download={`${generation.options.seed}-${generation.options.prompt}.png`}
+                >
+                  <IconDownload />
+                </a>
+                {/* <a
+                  className={styles.download}
+                  onClick={() => {
+                    setViewingGuid(generation.guid);
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </a> */}
+              </>
             )}
             {nextQueuedGeneration !== generation && (
               <button

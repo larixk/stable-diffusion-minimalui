@@ -4,6 +4,7 @@ import styles from "./index.module.css";
 import { Form } from "../components/Form";
 import { Generations } from "../components/Generations";
 import { generatePrompt } from "../components/generatePrompt";
+import classnames from "classnames";
 
 const defaultTxt2ImgOptions = {
   prompt: "",
@@ -21,10 +22,38 @@ export type Generation = {
   image: string | null;
 };
 
+function useScrollDirection() {
+  const [scrollDirection, setScrollDirection] = useState<string | null>(null);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const updateScrollDirection = () => {
+      const scrollY = window.scrollY;
+      const direction = scrollY > lastScrollY ? "down" : "up";
+      if (
+        direction !== scrollDirection &&
+        (scrollY - lastScrollY > 10 || scrollY - lastScrollY < 0)
+      ) {
+        setScrollDirection(direction);
+      }
+      lastScrollY = scrollY > 0 ? scrollY : 0;
+    };
+    window.addEventListener("scroll", updateScrollDirection);
+    return () => {
+      window.removeEventListener("scroll", updateScrollDirection);
+    };
+  }, [scrollDirection]);
+
+  return scrollDirection;
+}
+
 export default function Home() {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const clientRef = useRef<ReturnType<typeof sdwebui> | null>(null);
+
+  const scrollDirection = useScrollDirection();
 
   const [formOptions, setFormOptions] = useState<Options>(
     defaultTxt2ImgOptions
@@ -110,12 +139,16 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.controls}>
+      <div
+        className={classnames(styles.controls, {
+          [styles.scrollDirectionDown]: scrollDirection === "down",
+          [styles.scrollDirectionUp]: scrollDirection === "up",
+        })}
+      >
         <Form
           onChange={handleChangeOption}
           options={formOptions}
           onSubmit={() => {
-            const promptContainsNewLine = formOptions.prompt.includes("\n");
             const allPrompts = formOptions.prompt.split("\n");
 
             allPrompts
@@ -138,12 +171,14 @@ export default function Home() {
                 ]);
               });
 
-            requestAnimationFrame(() => {
-              window.scrollTo({
-                top: document.body.scrollHeight,
-                behavior: "smooth",
+            if (!isLoading) {
+              requestAnimationFrame(() => {
+                window.scrollTo({
+                  top: document.body.scrollHeight,
+                  behavior: "smooth",
+                });
               });
-            });
+            }
           }}
           isLoading={isLoading}
         />
