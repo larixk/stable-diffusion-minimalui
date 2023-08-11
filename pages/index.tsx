@@ -53,32 +53,37 @@ export default function Home() {
 
     const performGeneration = async () => {
       setIsLoading(true);
-      const steps = { low: 6, medium: 12, high: 20 }[nextInQueue.options.steps];
 
       const parameters = {
         prompt: nextInQueue.options.prompt,
         negativePrompt: nextInQueue.options.negativePrompt,
         width: nextInQueue.options.aspectRatio === "landscape" ? "768" : "512",
         height: nextInQueue.options.aspectRatio === "portrait" ? "768" : "512",
-        steps,
+        steps: { low: 8, medium: 20, high: 20 }[nextInQueue.options.steps],
         seed: nextInQueue.options.seed,
         hires:
           nextInQueue.options.steps === "high"
             ? {
-                steps: 10,
+                steps: 8,
                 upscaleBy: 2,
                 denoisingStrength: 0.5,
                 upscaler: "R-ESRGAN 4x+",
               }
             : undefined,
       };
-      const { images } = await clientRef.current.txt2img(parameters);
+      let image: Generation["image"];
+      try {
+        image = (await clientRef.current.txt2img(parameters)).images[0];
+      } catch (e) {
+        console.error(e);
+        image = "error";
+      }
       setGenerations((previousGenerations) => [
         ...previousGenerations.map((generation) =>
           generation.guid === nextInQueue.guid
             ? {
                 ...generation,
-                image: images[0],
+                image,
               }
             : generation
         ),

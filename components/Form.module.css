@@ -114,3 +114,20 @@
   color: rgb(var(--foreground-rgb));
   border: 1px solid rgba(var(--foreground-rgb), 1);
 }
+
+.randomizePrompt {
+  background: rgb(var(--background-rgb));
+  color: rgb(var(--foreground-rgb));
+  border: 1px solid rgba(var(--foreground-rgb), 1);
+  padding: 0.5rem;
+  border-radius: 0.3rem;
+  display: block;
+  opacity: 0.3;
+}
+.randomizePrompt:hover {
+  opacity: 1;
+}
+
+.randomizePrompt {
+  margin-left: 0.5rem;
+}

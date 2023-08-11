@@ -76,6 +76,7 @@
 .buttons {
   display: flex;
   gap: 1rem;
+  height: 2.8rem;
 }
 
 .delete,
@@ -86,6 +87,7 @@
   padding: 0.5rem;
   border-radius: 0.3rem;
   display: block;
+  animation: fadeIn 5s ease;
 }
 .delete:hover,
 .download:hover {
@@ -96,4 +98,23 @@
 
 .dropper:hover {
   opacity: 0.67;
+}
+
+.imageContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.imageContainer img {
+  animation: fadeIn 5s ease;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
