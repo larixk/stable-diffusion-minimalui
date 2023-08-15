@@ -90,12 +90,14 @@ export default function Home() {
         height: nextInQueue.options.aspectRatio === "portrait" ? "768" : "512",
         steps: { low: 8, medium: 20, high: 20 }[nextInQueue.options.steps],
         seed: nextInQueue.options.seed,
+        cfg_scale: 6,
+        sampler_name: "DPM++ SDE Karras",
         hires:
           nextInQueue.options.steps === "high"
             ? {
-                steps: 8,
+                steps: 20,
                 upscaleBy: 2,
-                denoisingStrength: 0.5,
+                denoisingStrength: 0.6,
                 upscaler: "R-ESRGAN 4x+",
               }
             : undefined,
@@ -137,12 +139,60 @@ export default function Home() {
     handleChangeOption("prompt", generatePrompt());
   }, []);
 
+  useEffect(() => {
+    let title = "SD";
+    if (isLoading) {
+      title = `⌛ ${title}`;
+    }
+    document.title = title;
+  }, [isLoading]);
+
+  const generateOrQueue = (options: Options) => {
+    const alreadyGenerated = generations.find(
+      (generation) =>
+        generation.options.prompt === options.prompt &&
+        generation.options.negativePrompt === options.negativePrompt &&
+        generation.options.aspectRatio === options.aspectRatio &&
+        generation.options.steps === options.steps &&
+        generation.options.seed === options.seed
+    );
+
+    if (alreadyGenerated) {
+      return;
+    }
+
+    setGenerations((previousGenerations) => [
+      ...previousGenerations,
+      {
+        guid: Math.random().toString(),
+        options: {
+          ...options,
+          seed:
+            options.seed === "-1"
+              ? Math.floor(Math.random() * 1000000).toString()
+              : options.seed,
+        },
+        image: null,
+      },
+    ]);
+
+    if (!isLoading) {
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
+      });
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div
         className={classnames(styles.controls, {
           [styles.scrollDirectionDown]: scrollDirection === "down",
           [styles.scrollDirectionUp]: scrollDirection === "up",
+          [styles.isEmpty]: generations.length === 0,
         })}
       >
         <Form
@@ -153,40 +203,30 @@ export default function Home() {
 
             allPrompts
               .filter((prompt) => prompt)
-              .forEach((prompt, index) => {
-                setGenerations((previousGenerations) => [
-                  ...previousGenerations,
-                  {
-                    guid: Math.random().toString(),
-                    options: {
-                      ...formOptions,
-                      prompt,
-                      seed:
-                        formOptions.seed === "-1"
-                          ? Math.floor(Math.random() * 1000000).toString()
-                          : formOptions.seed,
-                    },
-                    image: null,
-                  },
-                ]);
+              .forEach((prompt) => {
+                generateOrQueue({ ...formOptions, prompt });
               });
-
-            if (!isLoading) {
-              requestAnimationFrame(() => {
-                window.scrollTo({
-                  top: document.body.scrollHeight,
-                  behavior: "smooth",
-                });
-              });
-            }
           }}
           isLoading={isLoading}
         />
       </div>
-      <div className={styles.generations}>
+      <div
+        className={classnames(styles.generations, {
+          [styles.isEmpty]: generations.length === 0,
+        })}
+      >
         <Generations
           options={formOptions}
           generations={generations}
+          onClickUpscale={(generation: Generation) => {
+            generateOrQueue({
+              ...generation.options,
+              steps: generation.options.steps === "low" ? "medium" : "high",
+            });
+          }}
+          onClickRedo={(generation: Generation) => {
+            generateOrQueue(generation.options);
+          }}
           onClickOption={handleChangeOption}
           onClickDelete={(guid) => {
             setGenerations((previousGenerations) =>

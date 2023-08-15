@@ -16,6 +16,7 @@ import { IconPortrait } from "./Icons/IconPortrait";
 import { IconSquare } from "./Icons/IconSquare";
 import { IconDropper } from "./Icons/IconDropper";
 import { useState } from "react";
+import { EyeIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 
 const Option = ({
   value,
@@ -65,18 +66,17 @@ const Option = ({
       : valueIcons[value as keyof typeof valueIcons];
 
   return (
-    <div className={styles.option}>
+    <div
+      className={styles.option}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       <label>
         <Icon />
       </label>
       <span>{ValueIcon ? <ValueIcon /> : value || "/"}</span>
       {isShowingDropper && (
-        <button
-          className={styles.dropper}
-          onClick={onClick}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-        >
+        <button className={styles.dropper} onClick={onClick}>
           <IconDropper />
         </button>
       )}
@@ -86,16 +86,20 @@ const Option = ({
 
 export function Generations({
   generations,
+  onClickUpscale,
+  onClickRedo,
   onClickDelete,
   onClickOption,
   options,
 }: {
   generations: Generation[];
   onClickDelete: (guid: string) => void;
+  onClickUpscale: (generation: Generation) => void;
+  onClickRedo: (generation: Generation) => void;
   onClickOption: (key: keyof Options, value: Options[keyof Options]) => void;
   options: Options;
 }) {
-  const [viewingGuid, setViewingGuid] = useState<string | null>(null);
+  const [isViewingInfo, setIsViewingInfo] = useState(false);
   const [hoveredOptionAndValue, setHoveredOptionAndValue] = useState<
     [keyof Options, Options[keyof Options]] | null
   >(null);
@@ -104,24 +108,18 @@ export function Generations({
     (generation) => generation.image === null
   );
 
+  const isLoading = nextQueuedGeneration !== undefined;
+
   return generations.map((generation) => {
-    const isViewing = viewingGuid === generation.guid;
-    const isViewingOther = viewingGuid && viewingGuid !== generation.guid;
-
-    const scale = isViewingOther ? 1 / 16 : 1;
-
-    const width =
-      scale * (generation.options.aspectRatio === "landscape" ? 768 : 512);
-    const height =
-      scale * (generation.options.aspectRatio === "portrait" ? 768 : 512);
+    const width = generation.options.aspectRatio === "landscape" ? 768 : 512;
+    const height = generation.options.aspectRatio === "portrait" ? 768 : 512;
     return (
       <div
         className={classnames(styles.generation, {
           [styles.loaded]: generation.image !== null,
           [styles.isBeingLoaded]: nextQueuedGeneration === generation,
 
-          [styles.isViewing]: isViewing,
-          [styles.isViewingOther]: isViewingOther,
+          [styles.isViewing]: isViewingInfo,
 
           [styles.isMatchingHovered]:
             hoveredOptionAndValue !== null &&
@@ -132,16 +130,13 @@ export function Generations({
             generation.options[hoveredOptionAndValue[0]] !==
               hoveredOptionAndValue[1],
         })}
-        onClick={
-          isViewingOther ? () => setViewingGuid(generation.guid) : undefined
-        }
         key={generation.guid}
       >
         <div
           className={styles.imageContainer}
           style={{
-            width: isViewing ? "auto" : `${width}px`,
-            height: isViewing ? "auto" : `${height}px`,
+            width: `${width}px`,
+            height: `${height}px`,
           }}
         >
           {generation.image &&
@@ -194,21 +189,14 @@ export function Generations({
             })}
           </div>
           <div className={styles.buttons}>
-            {generation.image && generation.image !== "error" && (
-              <>
-                <a
-                  className={styles.download}
-                  href={`data:image/png;base64,${generation.image}`}
-                  download={`${generation.options.seed}-${generation.options.prompt}.png`}
-                >
-                  <IconDownload />
-                </a>
-                {/* <a
-                  className={styles.download}
-                  onClick={() => {
-                    setViewingGuid(generation.guid);
-                  }}
-                >
+            {generation.options.steps !== "high" && (
+              <a
+                className={styles.download}
+                onClick={() => {
+                  onClickUpscale(generation);
+                }}
+              >
+                {isLoading ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -220,16 +208,102 @@ export function Generations({
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                      d="M6 3v6m3-3H3"
                     />
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"
                     />
                   </svg>
-                </a> */}
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"
+                    />
+                  </svg>
+                )}
+                <span className={styles.iconUpscale}>
+                  {generation.options.steps === "low" ? (
+                    <IconMedium />
+                  ) : (
+                    <IconHigh />
+                  )}
+                </span>
+              </a>
+            )}
+            {generation.image && generation.image !== "error" && (
+              <>
+                <a
+                  className={styles.download}
+                  onClick={() => {
+                    setIsViewingInfo((wasViewingInfo) => !wasViewingInfo);
+                  }}
+                >
+                  <InformationCircleIcon className="w-6 h-6" />
+                </a>
+                <a
+                  className={styles.download}
+                  href={`data:image/png;base64,${generation.image}`}
+                  download={`${generation.options.seed}-${generation.options.prompt}.png`}
+                >
+                  <IconDownload />
+                </a>
               </>
+            )}
+            {generation.image && generation.image === "error" && (
+              <a
+                className={styles.download}
+                onClick={() => {
+                  onClickRedo(generation);
+                }}
+              >
+                {isLoading ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 3v6m3-3H3"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"
+                    />
+                  </svg>
+                )}
+              </a>
             )}
             {nextQueuedGeneration !== generation && (
               <button

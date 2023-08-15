@@ -4,6 +4,10 @@
   align-items: center;
 }
 
+.inputGroup:has(textarea) {
+  flex: 1;
+}
+
 .label {
   opacity: 0.67;
 }
@@ -16,7 +20,7 @@
 .form {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: 1rem;
   width: 100%;
@@ -71,6 +75,7 @@
 }
 
 .form textarea {
+  flex: 1;
   min-height: 7vh;
 }
 

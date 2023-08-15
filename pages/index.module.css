@@ -12,12 +12,17 @@
   flex-shrink: 0;
   flex-grow: 1;
   gap: 1rem;
-  align-items: center;
-  overflow: auto;
-  max-width: 100%;
+  align-items: flex-start;
+  width: 100%;
   padding: 1rem;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
+  opacity: 1;
+  transition: opacity 1s ease-in-out;
+}
+
+.generations.isEmpty {
+  opacity: 0;
 }
 
 .controls {
@@ -31,9 +36,21 @@
   top: 0;
   z-index: 1;
   background: rgba(var(--background-rgb), 1);
-  transition: transform 0.3s ease-in-out;
+  background: rgba(var(--background-rgb), 0.67);
+  backdrop-filter: blur(16px);
+  transition: transform 0.5s ease-in-out, opacity 0.2s ease-in-out;
 }
 
 .controls.scrollDirectionDown {
-  transform: translateY(-100%);
+  /* transform: translateY(-100%); */
+  opacity: 0;
+}
+
+.controls:hover,
+.controls.scrollDirectionDown:hover {
+  opacity: 1;
+}
+
+.controls.isEmpty {
+  transform: translateY(calc(50vh - 50%));
 }
