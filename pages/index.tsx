@@ -1,10 +1,11 @@
-const sdwebui = require("node-sd-webui").default;
-import { useEffect, useRef, useState } from "react";
+export const sdwebui = require("node-sd-webui").default;
+import { useEffect, useState } from "react";
 import styles from "./index.module.css";
 import { Form } from "../components/Form";
 import { Generations } from "../components/Generations";
 import { generatePrompt } from "../components/generatePrompt";
 import classnames from "classnames";
+import { useSD } from "../components/useSD";
 
 const defaultTxt2ImgOptions = {
   prompt: "",
@@ -51,21 +52,13 @@ function useScrollDirection() {
 export default function Home() {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const clientRef = useRef<ReturnType<typeof sdwebui> | null>(null);
 
   const scrollDirection = useScrollDirection();
 
   const [formOptions, setFormOptions] = useState<Options>(
     defaultTxt2ImgOptions
   );
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-
-    clientRef.current = sdwebui({
-      apiUrl: urlParams.get("sd") || "http://127.0.0.1:7860",
-    });
-  }, []);
+  const sdClientRef = useSD();
 
   useEffect(() => {
     if (isLoading) {
@@ -104,7 +97,7 @@ export default function Home() {
       };
       let image: Generation["image"];
       try {
-        image = (await clientRef.current.txt2img(parameters)).images[0];
+        image = (await sdClientRef.current.txt2img(parameters)).images[0];
       } catch (e) {
         console.error(e);
         image = "error";
@@ -147,7 +140,7 @@ export default function Home() {
     document.title = title;
   }, [isLoading]);
 
-  const generateOrQueue = (options: Options) => {
+  const generateOrQueue = (options: Options, skipDuplicateCheck = false) => {
     const alreadyGenerated = generations.find(
       (generation) =>
         generation.options.prompt === options.prompt &&
@@ -157,7 +150,7 @@ export default function Home() {
         generation.options.seed === options.seed
     );
 
-    if (alreadyGenerated) {
+    if (!skipDuplicateCheck && alreadyGenerated) {
       return;
     }
 
@@ -218,15 +211,16 @@ export default function Home() {
         <Generations
           options={formOptions}
           generations={generations}
-          onClickUpscale={(generation: Generation) => {
-            generateOrQueue({
-              ...generation.options,
-              steps: generation.options.steps === "low" ? "medium" : "high",
-            });
-          }}
-          onClickRedo={(generation: Generation) => {
-            generateOrQueue(generation.options);
-          }}
+          generateOrQueue={generateOrQueue}
+          // onClickUpscale={(generation: Generation) => {
+          //   generateOrQueue({
+          //     ...generation.options,
+          //     steps: generation.options.steps === "low" ? "medium" : "high",
+          //   });
+          // }}
+          // onClickRedo={(generation: Generation) => {
+          //   generateOrQueue(generation.options, true);
+          // }}
           onClickOption={handleChangeOption}
           onClickDelete={(guid) => {
             setGenerations((previousGenerations) =>

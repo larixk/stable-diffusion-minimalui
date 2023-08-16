@@ -4,7 +4,6 @@ import { IconPrompt } from "./Icons/IconPrompt";
 import { IconNegativePrompt } from "./Icons/IconNegativePrompt";
 import { IconAspectRatio } from "./Icons/IconAspectRatio";
 import { IconSteps } from "./Icons/IconSteps";
-import { IconSeed } from "./Icons/IconSeed";
 import { IconPortrait } from "./Icons/IconPortrait";
 import { IconLandscape } from "./Icons/IconLandscape";
 import { IconSquare } from "./Icons/IconSquare";
@@ -14,7 +13,11 @@ import { IconHigh } from "./Icons/IconHigh";
 import { IconLock } from "./Icons/IconLock";
 import { IconLockOpen } from "./Icons/IconLockOpen";
 import { generatePrompt } from "./generatePrompt";
-import { BeakerIcon, PaintBrushIcon } from "@heroicons/react/24/outline";
+import {
+  BeakerIcon,
+  FingerPrintIcon,
+  PaintBrushIcon,
+} from "@heroicons/react/24/outline";
 
 export function Form({
   options,
@@ -22,10 +25,10 @@ export function Form({
   onSubmit,
   isLoading,
 }: {
-  options: Options;
+  options: Partial<Options>;
   onChange: (key: keyof Options, value: Options[keyof Options]) => void;
   onSubmit: () => void;
-  isLoading: boolean;
+  isLoading?: boolean;
 }) {
   return (
     <form
@@ -83,122 +86,128 @@ export function Form({
           }}
         />
       </div>
-      <div className={styles.inputGroup}>
-        <label className={styles.label}>
-          <IconAspectRatio />
-        </label>
-        <div className={styles.radioButtons}>
-          <label className={styles.radioButton}>
-            <IconPortrait />
-            <input
-              type="radio"
-              id="aspectRatio"
-              value="portrait"
-              checked={options.aspectRatio == "portrait"}
-              onChange={(e) => {
-                onChange("aspectRatio", e.target.value);
-              }}
-            />
+      {options.aspectRatio !== undefined && (
+        <div className={styles.inputGroup}>
+          <label className={styles.label}>
+            <IconAspectRatio />
           </label>
-          <label className={styles.radioButton}>
-            <IconLandscape />
-            <input
-              type="radio"
-              value="landscape"
-              checked={options.aspectRatio == "landscape"}
-              onChange={(e) => {
-                onChange("aspectRatio", e.target.value);
-              }}
-            />
-          </label>
-          <label className={styles.radioButton}>
-            <IconSquare />
-            <input
-              type="radio"
-              value="square"
-              checked={options.aspectRatio == "square"}
-              onChange={(e) => {
-                onChange("aspectRatio", e.target.value);
-              }}
-            />
-          </label>
+          <div className={styles.radioButtons}>
+            <label className={styles.radioButton}>
+              <IconPortrait />
+              <input
+                type="radio"
+                id="aspectRatio"
+                value="portrait"
+                checked={options.aspectRatio == "portrait"}
+                onChange={(e) => {
+                  onChange("aspectRatio", e.target.value);
+                }}
+              />
+            </label>
+            <label className={styles.radioButton}>
+              <IconLandscape />
+              <input
+                type="radio"
+                value="landscape"
+                checked={options.aspectRatio == "landscape"}
+                onChange={(e) => {
+                  onChange("aspectRatio", e.target.value);
+                }}
+              />
+            </label>
+            <label className={styles.radioButton}>
+              <IconSquare />
+              <input
+                type="radio"
+                value="square"
+                checked={options.aspectRatio == "square"}
+                onChange={(e) => {
+                  onChange("aspectRatio", e.target.value);
+                }}
+              />
+            </label>
+          </div>
         </div>
-      </div>
-      <div className={styles.inputGroup} title="Steps">
-        <label className={styles.label}>
-          <IconSteps />
-        </label>
-        <div className={styles.radioButtons}>
-          <label className={styles.radioButton}>
-            <IconLow />
-            <input
-              type="radio"
-              id="steps"
-              value="low"
-              checked={options.steps == "low"}
-              onChange={(e) => {
-                onChange("steps", e.target.value);
-              }}
-            />
+      )}
+      {options.steps !== undefined && (
+        <div className={styles.inputGroup} title="Steps">
+          <label className={styles.label}>
+            <IconSteps />
           </label>
-          <label className={styles.radioButton}>
-            <IconMedium />
+          <div className={styles.radioButtons}>
+            <label className={styles.radioButton}>
+              <IconLow />
+              <input
+                type="radio"
+                id="steps"
+                value="low"
+                checked={options.steps == "low"}
+                onChange={(e) => {
+                  onChange("steps", e.target.value);
+                }}
+              />
+            </label>
+            <label className={styles.radioButton}>
+              <IconMedium />
 
-            <input
-              type="radio"
-              value="medium"
-              checked={options.steps == "medium"}
-              onChange={(e) => {
-                onChange("steps", e.target.value);
-              }}
-            />
-          </label>
-          <label className={styles.radioButton}>
-            <IconHigh />
-            <input
-              type="radio"
-              value="high"
-              checked={options.steps == "high"}
-              onChange={(e) => {
-                onChange("steps", e.target.value);
-              }}
-            />
-          </label>
+              <input
+                type="radio"
+                value="medium"
+                checked={options.steps == "medium"}
+                onChange={(e) => {
+                  onChange("steps", e.target.value);
+                }}
+              />
+            </label>
+            <label className={styles.radioButton}>
+              <IconHigh />
+              <input
+                type="radio"
+                value="high"
+                checked={options.steps == "high"}
+                onChange={(e) => {
+                  onChange("steps", e.target.value);
+                }}
+              />
+            </label>
+          </div>
         </div>
-      </div>
-      <div className={styles.inputGroup} title="Seed">
-        <label className={styles.label} htmlFor="seed">
-          <IconSeed />
-        </label>
-        <div className={styles.inputWithButton}>
-          <input
-            type="text"
-            id="seed"
-            value={options.seed}
-            onChange={(e) => {
-              onChange("seed", e.target.value);
-            }}
-          />
-          {options.seed !== "-1" && (
-            <button
-              className={styles.randomize}
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
+      )}
+      {options.seed !== undefined && (
+        <div className={styles.inputGroup} title="Seed">
+          <label className={styles.label} htmlFor="seed">
+            <FingerPrintIcon />
+          </label>
+          <div className={styles.inputWithButton}>
+            <input
+              type="text"
+              id="seed"
+              value={options.seed}
+              onChange={(e) => {
+                onChange("seed", e.target.value);
+              }}
+            />
+            {options.seed !== "-1" && (
+              <button
+                className={styles.randomize}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
 
-                onChange("seed", "-1");
-              }}
-            >
-              <span className={styles.iconLock}>
-                <IconLock />
-              </span>
-              <span className={styles.iconLockOpen}>
-                <IconLockOpen />
-              </span>
-            </button>
-          )}
+                  onChange("seed", "-1");
+                }}
+              >
+                <span className={styles.iconLock}>
+                  <IconLock />
+                </span>
+                <span className={styles.iconLockOpen}>
+                  <IconLockOpen />
+                </span>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <button className={styles.submit}>
         {isLoading ? (
           <svg
