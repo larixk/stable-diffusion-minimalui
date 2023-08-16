@@ -64,7 +64,7 @@ export default function Cam() {
   const [resultImages, setResultImages] = useState<string[]>([]);
 
   const capture = useCallback(() => {
-    const baseSize = 256;
+    const baseSize = 512;
     const width =
       formOptions.aspectRatio === "portrait" ? baseSize : baseSize * 1.5;
     const height =
@@ -132,9 +132,34 @@ export default function Cam() {
   return (
     <>
       {isStarted ? (
-        <div className={styles.webcam}>
-          <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" />
-        </div>
+        <>
+          {resultImages.length > 1 && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={resultImages[resultImages.length - 2]}
+              src={resultImages[resultImages.length - 2]}
+              alt=""
+              className={styles.previousResult}
+            />
+          )}
+          {resultImages.length > 0 && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={resultImages[resultImages.length - 1]}
+              src={resultImages[resultImages.length - 1]}
+              alt=""
+              className={styles.result}
+            />
+          )}
+          <div className={styles.webcam}>
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              mirrored
+              screenshotFormat="image/jpeg"
+            />
+          </div>
+        </>
       ) : (
         <div className={styles.form}>
           <Form
@@ -145,24 +170,6 @@ export default function Cam() {
             }}
           />
         </div>
-      )}
-      {resultImages.length > 1 && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={resultImages[resultImages.length - 2]}
-          src={resultImages[resultImages.length - 2]}
-          alt=""
-          className={styles.previousResult}
-        />
-      )}
-      {resultImages.length > 0 && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={resultImages[resultImages.length - 2]}
-          src={resultImages[resultImages.length - 1]}
-          alt=""
-          className={styles.result}
-        />
       )}
     </>
   );
