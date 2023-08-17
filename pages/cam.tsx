@@ -11,20 +11,46 @@ export type Img2ImgResponse = {
   info: string;
 };
 
-const size = {
-  width: Math.round(2160 / 2.5),
-  height: Math.round(3840 / 2.5),
+const qualityLevels = {
+  low: {
+    width: 384,
+    height: 384,
+    steps: 20,
+    denoising_strength: 0.37,
+    cfg_scale: 3,
+    fadeDuration: 0.5,
+  },
+  medium: {
+    width: 512,
+    height: 512,
+    steps: 20,
+    denoising_strength: 0.4,
+    cfg_scale: 12,
+    fadeDuration: 1,
+  },
+  high: {
+    width: 864,
+    height: 864,
+    steps: 20,
+    denoising_strength: 0.5,
+    cfg_scale: 12,
+    fadeDuration: 2,
+  },
 };
+
+const initialOptions = {
+  prompt: "",
+  negativePrompt:
+    "nude, naked, nsfw, text, low quality, lowest quality, blurry, ugly, watermark, frame, border",
+  steps: "low",
+} as const;
 
 export default function Cam() {
   const webcamRef = useRef<Webcam>(null);
   const [isStarted, setIsStarted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const [formOptions, setFormOptions] = useState<Partial<Options>>({
-    prompt: "",
-    negativePrompt: "nsfw, text, low quality, watermark, frame, border",
-  });
+  const [formOptions, setFormOptions] =
+    useState<Partial<Options>>(initialOptions);
 
   const handleChangeOption = (
     key: keyof Options,
@@ -36,50 +62,79 @@ export default function Cam() {
     }));
   };
 
-  useEffect(() => {
-    handleChangeOption("prompt", generatePrompt());
-    handleChangeOption(
-      "negativePrompt",
-      "nude, naked, nsfw, text, low quality, lowest quality, blurry, ugly, watermark, frame, border"
-    );
-  }, []);
-
   const [resultImages, setResultImages] = useState<string[]>([]);
+  const [averageTime, setAverageTime] = useState<number>(0);
 
-  const capture = useCallback(() => {
+  const steps = formOptions.steps ?? "low";
+  let width = qualityLevels[steps].width;
+  let height = qualityLevels[steps].height;
+
+  if (typeof window !== "undefined") {
+    const windowAspectRatio = window.innerWidth / window.innerHeight;
+    if (windowAspectRatio > 1) {
+      height = width / windowAspectRatio;
+    } else {
+      width = height * windowAspectRatio;
+    }
+  }
+  width = Math.round(width);
+  height = Math.round(height);
+
+  useEffect(() => {
+    if (!isStarted) {
+      return;
+    }
+
     let wasCanceled = false;
-    if (!webcamRef.current) {
-      return;
-    }
-    const imageData = webcamRef.current.getScreenshot(size);
-    if (!imageData) {
-      return;
-    }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const sdUrl = urlParams.get("sd") || "http://127.0.0.1:7860";
+    const loop = async () => {
+      if (wasCanceled) {
+        return;
+      }
 
-    const performImg2Img = async () => {
+      if (!webcamRef.current) {
+        setTimeout(loop, 100);
+        return;
+      }
+
+      const imageData = webcamRef.current.getScreenshot();
+      if (!imageData) {
+        setTimeout(loop, 100);
+        return;
+      }
+
       const options = {
-        ...size,
+        ...qualityLevels[steps],
+        width,
+        height,
         init_images: [imageData],
-        // prompt: formOptions.prompt,
-        // prompt: generatePrompt(),
-        prompt: "tommy hilfiger store",
+        prompt: formOptions.prompt,
         negative_prompt: formOptions.negativePrompt,
-        cfg_scale: 12,
-        steps: 20,
-        denoising_strength: 0.5,
       };
-      const response = await fetch(`${sdUrl}/sdapi/v1/img2img`, {
-        method: "POST",
-        body: JSON.stringify(options),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
 
-      const result: Img2ImgResponse = await response.json();
+      const startTime = performance.now();
+
+      const sdUrl =
+        new URLSearchParams(window.location.search).get("sd") ||
+        "http://127.0.0.1:7860";
+
+      let result: Img2ImgResponse;
+      try {
+        const response = await fetch(`${sdUrl}/sdapi/v1/img2img`, {
+          method: "POST",
+          body: JSON.stringify(options),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        result = await response.json();
+      } catch (e) {
+        console.error(e);
+        setTimeout(loop, 100);
+        return;
+      }
+
       if (wasCanceled) {
         return;
       }
@@ -88,41 +143,37 @@ export default function Cam() {
         ...previousResultImages,
         `data:image/png;base64,${result.images[0]}`,
       ]);
-    };
+      setAverageTime(
+        (previousAverageTime) =>
+          (previousAverageTime + performance.now() - startTime) / 2
+      );
 
-    setIsLoading(true);
-    performImg2Img().then(() => {
-      if (wasCanceled) {
-        return;
-      }
-      setIsLoading(false);
-    });
+      requestAnimationFrame(loop);
+    };
+    loop();
 
     return () => {
       wasCanceled = true;
     };
-  }, [formOptions]);
-
-  useEffect(() => {
-    if (!isStarted) {
-      return;
-    }
-    if (isLoading) {
-      return;
-    }
-
-    const intervalId = setInterval(capture, 1000);
-    capture();
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [isLoading, isStarted, capture]);
+  }, [
+    isStarted,
+    formOptions.steps,
+    formOptions.prompt,
+    formOptions.negativePrompt,
+    steps,
+    width,
+    height,
+  ]);
 
   return (
     <>
       {isStarted ? (
-        <>
+        <div
+          onClick={() => {
+            setIsStarted(false);
+            setResultImages([]);
+          }}
+        >
           {resultImages.length > 1 && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -139,20 +190,24 @@ export default function Cam() {
               src={resultImages[resultImages.length - 1]}
               alt=""
               className={styles.result}
+              style={{
+                animationDuration: `${averageTime * 0.8}ms`,
+              }}
             />
           )}
           <div className={styles.webcam}>
             <Webcam
-              videoConstraints={size}
+              videoConstraints={{
+                width,
+                height,
+              }}
               audio={false}
               ref={webcamRef}
               mirrored
-              imageSmoothing={false}
-              screenshotQuality={0.5}
               screenshotFormat="image/jpeg"
             />
           </div>
-        </>
+        </div>
       ) : (
         <div className={styles.form}>
           <Form
