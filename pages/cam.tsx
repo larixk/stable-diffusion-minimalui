@@ -31,9 +31,10 @@ type Img2ImgOptions = {
   restoreFaces?: boolean;
 };
 
-const dimensions = {
-  width: 512 * 1.5,
-  height: 512,
+const baseSize = 768;
+const size = {
+  width: 2160 / 3,
+  height: 3840 / 3,
 };
 
 export default function Cam() {
@@ -44,7 +45,6 @@ export default function Cam() {
   const [formOptions, setFormOptions] = useState<Partial<Options>>({
     prompt: "",
     negativePrompt: "nsfw, text, low quality, watermark, frame, border",
-    aspectRatio: "landscape" as "landscape" | "portrait" | "square",
   });
 
   const handleChangeOption = (
@@ -59,37 +59,39 @@ export default function Cam() {
 
   useEffect(() => {
     handleChangeOption("prompt", generatePrompt());
+    handleChangeOption(
+      "negativePrompt",
+      "nude, naked, nsfw, text, low quality, watermark, frame, border"
+    );
   }, []);
 
   const [resultImages, setResultImages] = useState<string[]>([]);
 
   const capture = useCallback(() => {
-    const baseSize = 512;
-    const width =
-      formOptions.aspectRatio === "portrait" ? baseSize : baseSize * 1.5;
-    const height =
-      formOptions.aspectRatio === "landscape" ? baseSize : baseSize * 1.5;
-
+    let wasCanceled = false;
+    setIsLoading(true);
     if (!webcamRef.current) {
+      setIsLoading(false);
       return;
     }
-    const imageData = webcamRef.current.getScreenshot({ width, height });
+    const imageData = webcamRef.current.getScreenshot(size);
     if (!imageData) {
+      setIsLoading(false);
       return;
     }
+
     const urlParams = new URLSearchParams(window.location.search);
     const sdUrl = urlParams.get("sd") || "http://127.0.0.1:7860";
 
     const performImg2Img = async () => {
       const options = {
+        ...size,
         init_images: [imageData],
         prompt: formOptions.prompt,
         negativePrompt: formOptions.negativePrompt,
-        width,
-        height,
-        cfgScale: 8,
+        cfgScale: 3,
         steps: 20,
-        denoising_strength: 0.5,
+        denoising_strength: 0.45,
       };
       const response = await fetch(`${sdUrl}/sdapi/v1/img2img`, {
         method: "POST",
@@ -100,17 +102,31 @@ export default function Cam() {
         },
       });
 
+      if (wasCanceled) {
+        return;
+      }
+
       const result: Img2ImgResponse = await response.json();
+      if (wasCanceled) {
+        return;
+      }
+
       setResultImages((previousResultImages) => [
         ...previousResultImages,
         `data:image/png;base64,${result.images[0]}`,
       ]);
     };
 
-    setIsLoading(true);
     performImg2Img().then(() => {
+      if (wasCanceled) {
+        return;
+      }
       setIsLoading(false);
     });
+
+    return () => {
+      wasCanceled = true;
+    };
   }, [formOptions]);
 
   useEffect(() => {
@@ -153,9 +169,12 @@ export default function Cam() {
           )}
           <div className={styles.webcam}>
             <Webcam
+              videoConstraints={size}
               audio={false}
               ref={webcamRef}
               mirrored
+              imageSmoothing={false}
+              screenshotQuality={0.5}
               screenshotFormat="image/jpeg"
             />
           </div>

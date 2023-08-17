@@ -116,7 +116,7 @@ export default function Home() {
     };
 
     performGeneration();
-  }, [generations, isLoading]);
+  }, [generations, isLoading, sdClientRef]);
 
   const handleChangeOption = (
     key: keyof Options,
