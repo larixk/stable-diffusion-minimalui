@@ -29,6 +29,7 @@ export function generatePrompt() {
     "risotto and broccoli",
     "important business people doing business",
     "a robot",
+    "muppets and puppets",
     "a hot air balloon",
     "a luxury watch",
     "a pair of sneakers",
@@ -56,6 +57,7 @@ export function generatePrompt() {
     "the high desert",
     "a tropical island",
     "a white studio backdrop",
+    "a snowy mountain",
   ];
 
   function sample<T>(arr: T[]): T {

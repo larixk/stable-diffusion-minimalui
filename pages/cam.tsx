@@ -1,6 +1,5 @@
 import { generatePrompt } from "@/components/generatePrompt";
 import styles from "./cam.module.css";
-import { useSD } from "@/components/useSD";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { Form } from "@/components/Form";
@@ -12,29 +11,9 @@ export type Img2ImgResponse = {
   info: string;
 };
 
-type Img2ImgOptions = {
-  imageData: string[];
-  prompt: string;
-  negativePrompt?: string;
-  width?: number;
-  height?: number;
-  samplingMethod?: string;
-  seed?: number;
-  variationSeed?: number;
-  variationSeedStrength?: number;
-  resizeSeedFromHeight?: number;
-  resizeSeedFromWidth?: number;
-  batchSize?: number;
-  batchCount?: number;
-  steps?: number;
-  cfgScale?: number;
-  restoreFaces?: boolean;
-};
-
-const baseSize = 768;
 const size = {
-  width: 2160 / 3,
-  height: 3840 / 3,
+  width: Math.round(2160 / 2.5),
+  height: Math.round(3840 / 2.5),
 };
 
 export default function Cam() {
@@ -61,7 +40,7 @@ export default function Cam() {
     handleChangeOption("prompt", generatePrompt());
     handleChangeOption(
       "negativePrompt",
-      "nude, naked, nsfw, text, low quality, watermark, frame, border"
+      "nude, naked, nsfw, text, low quality, lowest quality, blurry, ugly, watermark, frame, border"
     );
   }, []);
 
@@ -69,14 +48,11 @@ export default function Cam() {
 
   const capture = useCallback(() => {
     let wasCanceled = false;
-    setIsLoading(true);
     if (!webcamRef.current) {
-      setIsLoading(false);
       return;
     }
     const imageData = webcamRef.current.getScreenshot(size);
     if (!imageData) {
-      setIsLoading(false);
       return;
     }
 
@@ -88,23 +64,18 @@ export default function Cam() {
         ...size,
         init_images: [imageData],
         prompt: formOptions.prompt,
-        negativePrompt: formOptions.negativePrompt,
-        cfgScale: 3,
-        steps: 20,
+        negative_prompt: formOptions.negativePrompt,
+        cfg_scale: 12,
+        steps: 15,
         denoising_strength: 0.45,
       };
       const response = await fetch(`${sdUrl}/sdapi/v1/img2img`, {
         method: "POST",
-
         body: JSON.stringify(options),
         headers: {
           "Content-Type": "application/json",
         },
       });
-
-      if (wasCanceled) {
-        return;
-      }
 
       const result: Img2ImgResponse = await response.json();
       if (wasCanceled) {
@@ -117,6 +88,7 @@ export default function Cam() {
       ]);
     };
 
+    setIsLoading(true);
     performImg2Img().then(() => {
       if (wasCanceled) {
         return;
