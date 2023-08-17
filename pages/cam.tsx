@@ -63,11 +63,13 @@ export default function Cam() {
       const options = {
         ...size,
         init_images: [imageData],
-        prompt: formOptions.prompt,
+        // prompt: formOptions.prompt,
+        // prompt: generatePrompt(),
+        prompt: "tommy hilfiger store",
         negative_prompt: formOptions.negativePrompt,
         cfg_scale: 12,
-        steps: 15,
-        denoising_strength: 0.45,
+        steps: 20,
+        denoising_strength: 0.5,
       };
       const response = await fetch(`${sdUrl}/sdapi/v1/img2img`, {
         method: "POST",
