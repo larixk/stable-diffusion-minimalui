@@ -18,7 +18,6 @@ const qualityLevels = {
     steps: 20,
     denoising_strength: 0.37,
     cfg_scale: 3,
-    fadeDuration: 0.5,
   },
   medium: {
     width: 512,
@@ -26,44 +25,26 @@ const qualityLevels = {
     steps: 20,
     denoising_strength: 0.4,
     cfg_scale: 12,
-    fadeDuration: 1,
   },
   high: {
-    width: 864,
-    height: 864,
+    width: 1024,
+    height: 1024,
     steps: 20,
     denoising_strength: 0.5,
     cfg_scale: 12,
-    fadeDuration: 2,
   },
 };
 
-const initialOptions = {
-  prompt: "",
-  negativePrompt:
-    "nude, naked, nsfw, text, low quality, lowest quality, blurry, ugly, watermark, frame, border",
-  steps: "low",
-} as const;
-
 export default function Cam() {
+  const [isStarted, setIsRunning] = useState(false);
   const webcamRef = useRef<Webcam>(null);
-  const [isStarted, setIsStarted] = useState(false);
 
-  const [formOptions, setFormOptions] =
-    useState<Partial<Options>>(initialOptions);
-
-  const handleChangeOption = (
-    key: keyof Options,
-    value: Options[keyof Options]
-  ) => {
-    setFormOptions((previousOptions) => ({
-      ...previousOptions,
-      [key]: value,
-    }));
-  };
-
-  const [resultImages, setResultImages] = useState<string[]>([]);
-  const [averageTime, setAverageTime] = useState<number>(0);
+  const [formOptions, setFormOptions] = useState<Partial<Options>>({
+    prompt: "",
+    negativePrompt:
+      "nude, naked, nsfw, text, low quality, lowest quality, blurry, ugly, watermark, frame, border",
+    steps: "low",
+  });
 
   const steps = formOptions.steps ?? "low";
   let width = qualityLevels[steps].width;
@@ -79,6 +60,9 @@ export default function Cam() {
   }
   width = Math.round(width);
   height = Math.round(height);
+
+  const [resultImages, setResultImages] = useState<string[]>([]);
+  const [averageLoadTime, setAverageLoadTime] = useState<number>(0);
 
   useEffect(() => {
     if (!isStarted) {
@@ -143,9 +127,9 @@ export default function Cam() {
         ...previousResultImages,
         `data:image/png;base64,${result.images[0]}`,
       ]);
-      setAverageTime(
-        (previousAverageTime) =>
-          (previousAverageTime + performance.now() - startTime) / 2
+      setAverageLoadTime(
+        (previousAverageLoadTime) =>
+          (previousAverageLoadTime + performance.now() - startTime) / 2
       );
 
       requestAnimationFrame(loop);
@@ -165,60 +149,61 @@ export default function Cam() {
     height,
   ]);
 
-  return (
-    <>
-      {isStarted ? (
-        <div
-          onClick={() => {
-            setIsStarted(false);
-            setResultImages([]);
-          }}
-        >
-          {resultImages.length > 1 && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={resultImages[resultImages.length - 2]}
-              src={resultImages[resultImages.length - 2]}
-              alt=""
-              className={styles.previousResult}
-            />
-          )}
-          {resultImages.length > 0 && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={resultImages[resultImages.length - 1]}
-              src={resultImages[resultImages.length - 1]}
-              alt=""
-              className={styles.result}
-              style={{
-                animationDuration: `${averageTime * 0.8}ms`,
-              }}
-            />
-          )}
-          <div className={styles.webcam}>
-            <Webcam
-              videoConstraints={{
-                width,
-                height,
-              }}
-              audio={false}
-              ref={webcamRef}
-              mirrored
-              screenshotFormat="image/jpeg"
-            />
-          </div>
-        </div>
-      ) : (
-        <div className={styles.form}>
-          <Form
-            options={formOptions}
-            onChange={handleChangeOption}
-            onSubmit={() => {
-              setIsStarted(true);
-            }}
-          />
-        </div>
+  return isStarted ? (
+    <div
+      onClick={() => {
+        setIsRunning(false);
+        setResultImages([]);
+      }}
+    >
+      {resultImages.length > 1 && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={resultImages[resultImages.length - 2]}
+          src={resultImages[resultImages.length - 2]}
+          alt=""
+          className={styles.previousResult}
+        />
       )}
-    </>
+      {resultImages.length > 0 && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={resultImages[resultImages.length - 1]}
+          src={resultImages[resultImages.length - 1]}
+          alt=""
+          className={styles.result}
+          style={{
+            animationDuration: `${averageLoadTime * 0.8}ms`,
+          }}
+        />
+      )}
+      <div className={styles.webcam}>
+        <Webcam
+          videoConstraints={{
+            width,
+            height,
+          }}
+          audio={false}
+          ref={webcamRef}
+          mirrored
+          screenshotFormat="image/jpeg"
+        />
+      </div>
+    </div>
+  ) : (
+    <div className={styles.form}>
+      <Form
+        options={formOptions}
+        onChange={(key: keyof Options, value: Options[keyof Options]) => {
+          setFormOptions((previousOptions) => ({
+            ...previousOptions,
+            [key]: value,
+          }));
+        }}
+        onSubmit={() => {
+          setIsRunning(true);
+        }}
+      />
+    </div>
   );
 }
