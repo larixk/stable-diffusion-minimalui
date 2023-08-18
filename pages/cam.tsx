@@ -178,7 +178,12 @@ export default function Cam() {
           }}
         />
       )}
-      <div className={styles.webcam}>
+      <div
+        className={styles.webcam}
+        style={{
+          pointerEvents: resultImages.length > 0 ? "none" : "auto",
+        }}
+      >
         <Webcam
           videoConstraints={{
             width,
