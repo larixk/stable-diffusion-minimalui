@@ -20,3 +20,6 @@ body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
 }
+html {
+  font-size: min(24px, max(2vh, 1.5vw, 14px));
+}

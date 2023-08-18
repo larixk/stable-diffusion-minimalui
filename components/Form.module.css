@@ -25,6 +25,7 @@
   gap: 1rem;
   width: 100%;
   position: relative;
+  padding: 2rem;
 }
 
 .form input,

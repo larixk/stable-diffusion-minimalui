@@ -1,6 +1,6 @@
 import { generatePrompt } from "@/components/generatePrompt";
 import styles from "./cam.module.css";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { Form } from "@/components/Form";
 import { Options } from ".";
@@ -12,18 +12,23 @@ export type Img2ImgResponse = {
 };
 
 const qualityLevels = {
+  // About 5 seconds for a square frame on a 2019 MacBook Pro
   low: {
     width: 384,
     height: 384,
-    steps: 20,
-    denoising_strength: 0.3,
-    cfg_scale: 3,
+    steps: 18,
+    denoising_strength: 0.4,
+    sampler_name: "DPM++ SDE Karras",
+    cfg_scale: 5,
   },
+  // About 5 seconds for a square frame on an RTX2070 Super
+  // About 30 seconds for a square frame on a 2019 MacBook Pro
   medium: {
     width: 768,
     height: 768,
-    steps: 20,
+    steps: 18,
     denoising_strength: 0.45,
+    sampler_name: "DPM++ SDE Karras",
     cfg_scale: 8,
   },
   high: {
@@ -31,6 +36,7 @@ const qualityLevels = {
     height: 1280,
     steps: 30,
     denoising_strength: 0.6,
+    sampler_name: "DPM++ SDE Karras",
     cfg_scale: 12,
   },
 };
@@ -53,9 +59,9 @@ export default function Cam() {
   if (typeof window !== "undefined") {
     const windowAspectRatio = window.innerWidth / window.innerHeight;
     if (windowAspectRatio > 1) {
-      width = height * windowAspectRatio;
-    } else {
       height = width / windowAspectRatio;
+    } else {
+      width = height * windowAspectRatio;
     }
   }
   width = Math.round(width);
@@ -77,7 +83,7 @@ export default function Cam() {
       }
 
       if (!webcamRef.current) {
-        setTimeout(loop, 100);
+        setTimeout(loop, 200);
         return;
       }
 
@@ -86,7 +92,7 @@ export default function Cam() {
         height,
       });
       if (!imageData) {
-        setTimeout(loop, 100);
+        setTimeout(loop, 200);
         return;
       }
 
@@ -95,6 +101,7 @@ export default function Cam() {
         width,
         height,
         init_images: [imageData],
+        // override_settings: { "Clip skip": 1 },
         prompt:
           formOptions.prompt === "" ? generatePrompt() : formOptions.prompt,
         negative_prompt: formOptions.negativePrompt,
@@ -158,6 +165,7 @@ export default function Cam() {
       onClick={() => {
         setIsRunning(false);
         setResultImages([]);
+        setAverageLoadTime(0);
       }}
     >
       {resultImages.length > 1 && (
