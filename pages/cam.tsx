@@ -53,9 +53,9 @@ export default function Cam() {
   if (typeof window !== "undefined") {
     const windowAspectRatio = window.innerWidth / window.innerHeight;
     if (windowAspectRatio > 1) {
-      height = width / windowAspectRatio;
-    } else {
       width = height * windowAspectRatio;
+    } else {
+      height = width / windowAspectRatio;
     }
   }
   width = Math.round(width);
@@ -81,7 +81,10 @@ export default function Cam() {
         return;
       }
 
-      const imageData = webcamRef.current.getScreenshot();
+      const imageData = webcamRef.current.getScreenshot({
+        width,
+        height,
+      });
       if (!imageData) {
         setTimeout(loop, 100);
         return;
