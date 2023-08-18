@@ -16,21 +16,21 @@ const qualityLevels = {
     width: 384,
     height: 384,
     steps: 20,
-    denoising_strength: 0.37,
+    denoising_strength: 0.3,
     cfg_scale: 3,
   },
   medium: {
-    width: 512,
-    height: 512,
+    width: 768,
+    height: 768,
     steps: 20,
-    denoising_strength: 0.4,
-    cfg_scale: 12,
+    denoising_strength: 0.45,
+    cfg_scale: 8,
   },
   high: {
-    width: 1024,
-    height: 1024,
-    steps: 20,
-    denoising_strength: 0.5,
+    width: 1280,
+    height: 1280,
+    steps: 30,
+    denoising_strength: 0.6,
     cfg_scale: 12,
   },
 };
@@ -42,7 +42,7 @@ export default function Cam() {
   const [formOptions, setFormOptions] = useState<Partial<Options>>({
     prompt: "",
     negativePrompt:
-      "nude, naked, nsfw, text, low quality, lowest quality, blurry, ugly, watermark, frame, border",
+      "nude, nsfw, text, low quality, lowest quality, blurry, ugly, watermark, frame, border",
     steps: "low",
   });
 
@@ -92,7 +92,8 @@ export default function Cam() {
         width,
         height,
         init_images: [imageData],
-        prompt: formOptions.prompt,
+        prompt:
+          formOptions.prompt === "" ? generatePrompt() : formOptions.prompt,
         negative_prompt: formOptions.negativePrompt,
       };
 
