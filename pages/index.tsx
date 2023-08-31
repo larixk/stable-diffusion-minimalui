@@ -192,7 +192,8 @@ export default function Home() {
           onChange={handleChangeOption}
           options={formOptions}
           onSubmit={() => {
-            const allPrompts = formOptions.prompt.split("\n");
+            const prompt = formOptions.prompt || generatePrompt();
+            const allPrompts = prompt.split("\n");
 
             allPrompts
               .filter((prompt) => prompt)

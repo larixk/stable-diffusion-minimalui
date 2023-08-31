@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { Form } from "@/components/Form";
 import { Options } from ".";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 export type Img2ImgResponse = {
   images: string[];
@@ -14,20 +15,20 @@ export type Img2ImgResponse = {
 const qualityLevels = {
   // About 5 seconds for a square frame on a 2019 MacBook Pro
   low: {
-    width: 384,
-    height: 384,
-    steps: 18,
-    denoising_strength: 0.4,
+    width: 512,
+    height: 512,
+    steps: 8,
+    denoising_strength: 0.5,
+    cfg_scale: 6,
     sampler_name: "DPM++ SDE Karras",
-    cfg_scale: 5,
   },
   // About 5 seconds for a square frame on an RTX2070 Super
-  // About 30 seconds for a square frame on a 2019 MacBook Pro
+  // About 15 seconds for a square frame on a 2019 MacBook Pro
   medium: {
     width: 768,
     height: 768,
     steps: 18,
-    denoising_strength: 0.45,
+    denoising_strength: 0.5,
     sampler_name: "DPM++ SDE Karras",
     cfg_scale: 8,
   },
@@ -35,7 +36,7 @@ const qualityLevels = {
     width: 1280,
     height: 1280,
     steps: 30,
-    denoising_strength: 0.6,
+    denoising_strength: 0.5,
     sampler_name: "DPM++ SDE Karras",
     cfg_scale: 12,
   },
@@ -43,6 +44,7 @@ const qualityLevels = {
 
 export default function Cam() {
   const [isStarted, setIsRunning] = useState(false);
+  const [error, setError] = useState<string>();
   const webcamRef = useRef<Webcam>(null);
 
   const [formOptions, setFormOptions] = useState<Partial<Options>>({
@@ -77,6 +79,10 @@ export default function Cam() {
 
     let wasCanceled = false;
 
+    const sdUrl =
+      new URLSearchParams(window.location.search).get("sd") ||
+      "http://127.0.0.1:7860";
+
     const loop = async () => {
       if (wasCanceled) {
         return;
@@ -101,38 +107,50 @@ export default function Cam() {
         width,
         height,
         init_images: [imageData],
-        // override_settings: { "Clip skip": 1 },
         prompt:
           formOptions.prompt === "" ? generatePrompt() : formOptions.prompt,
         negative_prompt: formOptions.negativePrompt,
+        override_settings: {
+          CLIP_stop_at_last_layers: 1,
+          img2img_fix_steps: true,
+        },
       };
 
       const startTime = performance.now();
 
-      const sdUrl =
-        new URLSearchParams(window.location.search).get("sd") ||
-        "http://127.0.0.1:7860";
-
-      let result: Img2ImgResponse;
+      let response;
       try {
-        const response = await fetch(`${sdUrl}/sdapi/v1/img2img`, {
+        response = await fetch(`${sdUrl}/sdapi/v1/img2img`, {
           method: "POST",
           body: JSON.stringify(options),
           headers: {
             "Content-Type": "application/json",
           },
         });
-
-        result = await response.json();
       } catch (e) {
-        console.error(e);
-        setTimeout(loop, 100);
+        setError((e as Error).message);
+        setIsRunning(false);
+        setResultImages([]);
+        setAverageLoadTime(0);
         return;
       }
-
       if (wasCanceled) {
         return;
       }
+
+      if (!response.ok) {
+        setError(
+          `HTTP ${response.status} ${
+            response.statusText
+          }: ${await response.text()}`
+        );
+        setIsRunning(false);
+        setResultImages([]);
+        setAverageLoadTime(0);
+        return;
+      }
+
+      const result: Img2ImgResponse = await response.json();
 
       setResultImages((previousResultImages) => [
         ...previousResultImages,
@@ -149,6 +167,12 @@ export default function Cam() {
 
     return () => {
       wasCanceled = true;
+      fetch(`${sdUrl}/sdapi/v1/interrupt`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     };
   }, [
     isStarted,
@@ -160,7 +184,18 @@ export default function Cam() {
     height,
   ]);
 
-  return isStarted ? (
+  return error ? (
+    <div className={styles.error}>
+      <span>{error}</span>
+      <button
+        onClick={() => {
+          setError(undefined);
+        }}
+      >
+        <XMarkIcon className="w-6 h-6" />
+      </button>
+    </div>
+  ) : isStarted ? (
     <div
       onClick={() => {
         setIsRunning(false);
