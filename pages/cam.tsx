@@ -18,7 +18,7 @@ const qualityLevels = {
     width: 512,
     height: 512,
     steps: 8,
-    denoising_strength: 0.5,
+    denoising_strength: 0.45,
     cfg_scale: 6,
     sampler_name: "DPM++ SDE Karras",
   },
@@ -28,7 +28,7 @@ const qualityLevels = {
     width: 768,
     height: 768,
     steps: 18,
-    denoising_strength: 0.5,
+    denoising_strength: 0.45,
     sampler_name: "DPM++ SDE Karras",
     cfg_scale: 8,
   },
@@ -36,7 +36,7 @@ const qualityLevels = {
     width: 1280,
     height: 1280,
     steps: 30,
-    denoising_strength: 0.5,
+    denoising_strength: 0.45,
     sampler_name: "DPM++ SDE Karras",
     cfg_scale: 12,
   },
@@ -152,13 +152,17 @@ export default function Cam() {
 
       const result: Img2ImgResponse = await response.json();
 
-      setResultImages((previousResultImages) => [
-        ...previousResultImages,
-        `data:image/png;base64,${result.images[0]}`,
-      ]);
-      setAverageLoadTime(
-        (previousAverageLoadTime) =>
+      setResultImages((previousResultImages) =>
+        [
+          ...previousResultImages,
+          `data:image/png;base64,${result.images[0]}`,
+        ].slice(-3)
+      );
+      setAverageLoadTime((previousAverageLoadTime) =>
+        Math.min(
+          500,
           (previousAverageLoadTime + performance.now() - startTime) / 2
+        )
       );
 
       requestAnimationFrame(loop);
