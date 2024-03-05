@@ -47,8 +47,14 @@ export default function Cam() {
   const [error, setError] = useState<string>();
   const webcamRef = useRef<Webcam>(null);
 
+  let initialPrompt = "";
+  if (typeof window !== "undefined") {
+    initialPrompt =
+      new URLSearchParams(window.location.search).get("prompt") ?? "";
+  }
+
   const [formOptions, setFormOptions] = useState<Partial<Options>>({
-    prompt: "",
+    prompt: initialPrompt,
     negativePrompt:
       "nude, nsfw, text, low quality, lowest quality, blurry, ugly, watermark, frame, border",
     steps: "low",
